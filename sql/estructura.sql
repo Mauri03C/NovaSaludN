@@ -49,3 +49,4 @@ CREATE TABLE usuarios (
     password VARCHAR(255) NOT NULL,
     rol ENUM('admin', 'vendedor') DEFAULT 'admin'
 );
+

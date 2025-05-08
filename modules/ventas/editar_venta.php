@@ -15,30 +15,44 @@ if (!isset($_GET['id'])) {
 $id_venta = $_GET['id'];
 
 // Obtener datos actuales de la venta
-$venta = $conn->query("SELECT * FROM ventas WHERE id = $id_venta")->fetch_assoc();
-if (!$venta) {
+$venta_actual = $conn->query("SELECT * FROM ventas WHERE id = $id_venta")->fetch_assoc();
+if (!$venta_actual) {
     echo "Venta no encontrada.";
     exit();
 }
 
+$producto_anterior_id = $venta_actual['id_producto'];
+$cantidad_anterior = $venta_actual['cantidad'];
+
 // Si se envió el formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id_producto = $_POST['id_producto'];
-    $cantidad = $_POST['cantidad'];
+    $id_producto_nuevo = $_POST['id_producto'];
+    $cantidad_nueva = $_POST['cantidad'];
 
-    // Obtener nuevo precio
-    $producto = $conn->query("SELECT precio FROM productos WHERE id = $id_producto")->fetch_assoc();
-    $precio = $producto['precio'];
-    $total = $cantidad * $precio;
+    // Revertir stock anterior
+    $conn->query("UPDATE productos SET stock = stock + $cantidad_anterior WHERE id = $producto_anterior_id");
 
-    // Actualizar venta
-    $conn->query("UPDATE ventas SET id_producto = $id_producto, cantidad = $cantidad, total = $total WHERE id = $id_venta");
+    // Descontar nuevo stock
+    $producto_nuevo = $conn->query("SELECT precio, stock FROM productos WHERE id = $id_producto_nuevo")->fetch_assoc();
+    $precio_unitario = $producto_nuevo['precio'];
 
-    header("Location: ventas.php");
-    exit();
+    if ($producto_nuevo['stock'] < $cantidad_nueva) {
+        echo "<div class='alert alert-danger'>No hay suficiente stock para completar esta venta.</div>";
+    } else {
+        $conn->query("UPDATE productos SET stock = stock - $cantidad_nueva WHERE id = $id_producto_nuevo");
+
+        // Calcular nuevo total
+        $total_nuevo = $cantidad_nueva * $precio_unitario;
+
+        // Actualizar venta
+        $conn->query("UPDATE ventas SET id_producto = $id_producto_nuevo, cantidad = $cantidad_nueva, total = $total_nuevo WHERE id = $id_venta");
+
+        header("Location: ventas.php");
+        exit();
+    }
 }
 
-// Obtener todos los productos
+// Obtener productos
 $productos = $conn->query("SELECT * FROM productos");
 ?>
 
@@ -56,16 +70,16 @@ $productos = $conn->query("SELECT * FROM productos");
         <div class="mb-3">
             <label for="id_producto" class="form-label">Producto</label>
             <select name="id_producto" class="form-select" required>
-                <?php while ($producto = $productos->fetch_assoc()) : ?>
-                    <option value="<?= $producto['id'] ?>" <?= $producto['id'] == $venta['id_producto'] ? 'selected' : '' ?>>
-                        <?= $producto['nombre'] ?>
+                <?php while ($prod = $productos->fetch_assoc()) : ?>
+                    <option value="<?= $prod['id'] ?>" <?= $prod['id'] == $venta_actual['id_producto'] ? 'selected' : '' ?>>
+                        <?= $prod['nombre'] ?>
                     </option>
                 <?php endwhile ?>
             </select>
         </div>
         <div class="mb-3">
             <label for="cantidad" class="form-label">Cantidad</label>
-            <input type="number" name="cantidad" class="form-control" value="<?= $venta['cantidad'] ?>" required min="1">
+            <input type="number" name="cantidad" class="form-control" value="<?= $venta_actual['cantidad'] ?>" required min="1">
         </div>
         <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         <a href="ventas.php" class="btn btn-secondary">Cancelar</a>
