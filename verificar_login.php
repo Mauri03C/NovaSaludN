@@ -1,4 +1,3 @@
-<?php
 session_start();
 require_once 'includes/db.php';
 
@@ -24,7 +23,7 @@ if ($result->num_rows === 1) {
     if (password_verify($password, $fila['password'])) {
         // Iniciar sesión y redirigir al dashboard
         $_SESSION['usuario'] = $fila['usuario'];
-        $_SESSION['rol'] = $fila['rol'];
+        $_SESSION['rol'] = $fila['rol'];  // Guardar el rol
         header("Location: dashboard.php");
         exit();
     }

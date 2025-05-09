@@ -1,5 +1,7 @@
 <?php
 session_start();
+
+// Verificar si ya está autenticado
 if (isset($_SESSION['usuario'])) {
     header("Location: dashboard.php");
     exit();
@@ -7,16 +9,16 @@ if (isset($_SESSION['usuario'])) {
 
 $mensaje_error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verificar login (esto es un ejemplo, debes hacerlo con seguridad)
+    // Verificar si los campos están vacíos
     if (empty($_POST['usuario']) || empty($_POST['password'])) {
         $mensaje_error = 'Por favor ingrese todos los campos.';
     } else {
-        // Ejemplo de autenticación (esto debería ser más seguro)
+        // Verificar usuario y contraseña
         require_once 'includes/db.php';
         $usuario = $_POST['usuario'];
         $password = $_POST['password'];
 
-        // Aquí deberías hacer la consulta para verificar el usuario y la contraseña (con hash)
+        // Preparar la consulta SQL para buscar al usuario
         $stmt = $conn->prepare("SELECT * FROM usuarios WHERE usuario = ?");
         $stmt->bind_param("s", $usuario);
         $stmt->execute();
@@ -24,8 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($resultado->num_rows > 0) {
             $usuario_db = $resultado->fetch_assoc();
+            // Verificar contraseña con hash
             if (password_verify($password, $usuario_db['password'])) {
-                $_SESSION['usuario'] = $usuario_db['usuario']; // O cualquier otro valor único
+                // Guardar los datos del usuario en la sesión
+                $_SESSION['usuario'] = $usuario_db['usuario'];
+                $_SESSION['rol'] = $usuario_db['rol']; // Guardamos el rol también
                 header("Location: dashboard.php");
                 exit();
             } else {
