@@ -7,15 +7,19 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: ventas.php");
     exit();
 }
 
-$id_venta = $_GET['id'];
+$id_venta = (int) $_GET['id']; // Aseguramos que el ID es un número entero
 
-// Obtener datos actuales de la venta
-$venta_actual = $conn->query("SELECT * FROM ventas WHERE id = $id_venta")->fetch_assoc();
+// Obtener datos actuales de la venta de forma segura
+$stmt = $conn->prepare("SELECT * FROM ventas WHERE id = ?");
+$stmt->bind_param("i", $id_venta);
+$stmt->execute();
+$venta_actual = $stmt->get_result()->fetch_assoc();
+
 if (!$venta_actual) {
     echo "Venta no encontrada.";
     exit();
@@ -26,44 +30,49 @@ $cantidad_anterior = $venta_actual['cantidad'];
 
 // Si se envió el formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id_producto_nuevo = $_POST['id_producto'];
-    $cantidad_nueva = $_POST['cantidad'];
+    $id_producto_nuevo = (int) $_POST['id_producto'];
+    $cantidad_nueva = (int) $_POST['cantidad'];
 
-    // Revertir stock anterior
-    $conn->query("UPDATE productos SET stock = stock + $cantidad_anterior WHERE id = $producto_anterior_id");
+    // Revertir stock anterior de manera segura
+    $stmt = $conn->prepare("UPDATE productos SET stock = stock + ? WHERE id = ?");
+    $stmt->bind_param("ii", $cantidad_anterior, $producto_anterior_id);
+    $stmt->execute();
 
-    // Descontar nuevo stock
-    $producto_nuevo = $conn->query("SELECT precio, stock FROM productos WHERE id = $id_producto_nuevo")->fetch_assoc();
-    $precio_unitario = $producto_nuevo['precio'];
+    // Obtener datos del producto nuevo
+    $stmt = $conn->prepare("SELECT precio, stock FROM productos WHERE id = ?");
+    $stmt->bind_param("i", $id_producto_nuevo);
+    $stmt->execute();
+    $producto_nuevo = $stmt->get_result()->fetch_assoc();
 
     if ($producto_nuevo['stock'] < $cantidad_nueva) {
         echo "<div class='alert alert-danger'>No hay suficiente stock para completar esta venta.</div>";
     } else {
-        $conn->query("UPDATE productos SET stock = stock - $cantidad_nueva WHERE id = $id_producto_nuevo");
+        // Descontar stock del nuevo producto de manera segura
+        $stmt = $conn->prepare("UPDATE productos SET stock = stock - ? WHERE id = ?");
+        $stmt->bind_param("ii", $cantidad_nueva, $id_producto_nuevo);
+        $stmt->execute();
 
         // Calcular nuevo total
-        $total_nuevo = $cantidad_nueva * $precio_unitario;
+        $total_nuevo = $cantidad_nueva * $producto_nuevo['precio'];
 
-        // Actualizar venta
-        $conn->query("UPDATE ventas SET id_producto = $id_producto_nuevo, cantidad = $cantidad_nueva, total = $total_nuevo WHERE id = $id_venta");
+        // Actualizar venta de forma segura
+        $stmt = $conn->prepare("UPDATE ventas SET id_producto = ?, cantidad = ?, total = ? WHERE id = ?");
+        $stmt->bind_param("iiis", $id_producto_nuevo, $cantidad_nueva, $total_nuevo, $id_venta);
+        $stmt->execute();
 
         header("Location: ventas.php");
         exit();
     }
 }
 
-// Obtener productos
-$productos = $conn->query("SELECT * FROM productos");
+// Obtener productos de manera segura
+$stmt = $conn->prepare("SELECT * FROM productos");
+$stmt->execute();
+$productos = $stmt->get_result();
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Editar Venta - Nova Salud</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+<?php include '../../includes/header.php'; ?>
+
 <div class="container mt-5">
     <h3>Editar Venta</h3>
     <form method="POST">
@@ -72,7 +81,7 @@ $productos = $conn->query("SELECT * FROM productos");
             <select name="id_producto" class="form-select" required>
                 <?php while ($prod = $productos->fetch_assoc()) : ?>
                     <option value="<?= $prod['id'] ?>" <?= $prod['id'] == $venta_actual['id_producto'] ? 'selected' : '' ?>>
-                        <?= $prod['nombre'] ?>
+                        <?= htmlspecialchars($prod['nombre']) ?>
                     </option>
                 <?php endwhile ?>
             </select>
@@ -85,5 +94,5 @@ $productos = $conn->query("SELECT * FROM productos");
         <a href="ventas.php" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
-</body>
-</html>
+
+<?php include '../../includes/footer.php'; ?>

@@ -4,6 +4,38 @@ if (isset($_SESSION['usuario'])) {
     header("Location: dashboard.php");
     exit();
 }
+
+$mensaje_error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verificar login (esto es un ejemplo, debes hacerlo con seguridad)
+    if (empty($_POST['usuario']) || empty($_POST['password'])) {
+        $mensaje_error = 'Por favor ingrese todos los campos.';
+    } else {
+        // Ejemplo de autenticación (esto debería ser más seguro)
+        require_once 'includes/db.php';
+        $usuario = $_POST['usuario'];
+        $password = $_POST['password'];
+
+        // Aquí deberías hacer la consulta para verificar el usuario y la contraseña (con hash)
+        $stmt = $conn->prepare("SELECT * FROM usuarios WHERE usuario = ?");
+        $stmt->bind_param("s", $usuario);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        
+        if ($resultado->num_rows > 0) {
+            $usuario_db = $resultado->fetch_assoc();
+            if (password_verify($password, $usuario_db['password'])) {
+                $_SESSION['usuario'] = $usuario_db['usuario']; // O cualquier otro valor único
+                header("Location: dashboard.php");
+                exit();
+            } else {
+                $mensaje_error = 'Contraseña incorrecta.';
+            }
+        } else {
+            $mensaje_error = 'El usuario no existe.';
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -18,7 +50,10 @@ if (isset($_SESSION['usuario'])) {
     <h3 class="text-center mb-4">Iniciar Sesión - Nova Salud</h3>
     <div class="row justify-content-center">
         <div class="col-md-4">
-            <form action="verificar_login.php" method="POST">
+            <?php if ($mensaje_error): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($mensaje_error) ?></div>
+            <?php endif; ?>
+            <form action="login.php" method="POST">
                 <div class="mb-3">
                     <label for="usuario" class="form-label">Usuario</label>
                     <input type="text" class="form-control" name="usuario" required>

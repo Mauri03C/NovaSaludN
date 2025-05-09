@@ -38,13 +38,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Agregar Cliente - Nova Salud</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+<?php include('../../includes/header.php'); ?>
+
 <body>
 <div class="container mt-5">
     <h3>Agregar Nuevo Cliente</h3>
@@ -70,5 +65,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <button type="submit" class="btn btn-success">Guardar Cliente</button>
     </form>
 </div>
+
+<?php include('../../includes/footer.php'); ?>
+
 </body>
 </html>

@@ -6,10 +6,12 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
-$resultado = $conn->query("SELECT ventas.id, productos.nombre, ventas.cantidad, ventas.total, ventas.fecha_venta 
-                            FROM ventas 
-                            JOIN productos ON ventas.id_producto = productos.id");
-
+// Utilizando consultas preparadas
+$stmt = $conn->prepare("SELECT ventas.id, productos.nombre, ventas.cantidad, ventas.total, ventas.fecha_venta 
+                        FROM ventas 
+                        JOIN productos ON ventas.id_producto = productos.id");
+$stmt->execute();
+$resultado = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>

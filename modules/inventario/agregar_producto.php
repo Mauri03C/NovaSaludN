@@ -5,46 +5,45 @@ if (!isset($_SESSION['usuario'])) {
     header("Location: ../../login.php");
     exit();
 }
+include '../../includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Agregar Producto</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
 <div class="container mt-5">
     <h3>Agregar Nuevo Producto</h3>
     <form action="guardar_producto.php" method="POST">
         <div class="mb-3">
-            <label>Nombre</label>
-            <input type="text" name="nombre" class="form-control" required>
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" id="nombre" name="nombre" class="form-control" required>
         </div>
+
         <div class="mb-3">
-            <label>Descripción</label>
-            <textarea name="descripcion" class="form-control"></textarea>
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea id="descripcion" name="descripcion" class="form-control"></textarea>
         </div>
+
         <div class="mb-3">
-            <label>Stock</label>
-            <input type="number" name="stock" class="form-control" required>
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" id="stock" name="stock" class="form-control" min="0" required>
         </div>
+
         <div class="mb-3">
-            <label>Precio (S/)</label>
-            <input type="number" step="0.01" name="precio" class="form-control" required>
+            <label for="precio" class="form-label">Precio (S/)</label>
+            <input type="number" id="precio" name="precio" class="form-control" step="0.01" min="0" required>
         </div>
+
         <div class="mb-3">
-            <label>Categoría</label>
-            <input type="text" name="categoria" class="form-control">
+            <label for="categoria" class="form-label">Categoría</label>
+            <input type="text" id="categoria" name="categoria" class="form-control">
         </div>
+
         <div class="mb-3">
-            <label>Fecha de Vencimiento</label>
-            <input type="date" name="fecha_vencimiento" class="form-control">
+            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
+            <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="form-control">
         </div>
+
         <button type="submit" class="btn btn-success">Guardar</button>
         <a href="inventario.php" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
-</body>
-</html>
+
+<?php include '../../includes/footer.php'; ?>

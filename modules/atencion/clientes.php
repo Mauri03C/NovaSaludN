@@ -10,13 +10,8 @@ if (!isset($_SESSION['usuario'])) {
 $resultado = $conn->query("SELECT * FROM clientes");
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Clientes - Nova Salud</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+<?php include('../../includes/header.php'); ?>
+
 <body>
 <div class="container mt-5">
     <h3>Lista de Clientes</h3>
@@ -53,5 +48,8 @@ $resultado = $conn->query("SELECT * FROM clientes");
         </tbody>
     </table>
 </div>
+
+<?php include('../../includes/footer.php'); ?>
+
 </body>
 </html>

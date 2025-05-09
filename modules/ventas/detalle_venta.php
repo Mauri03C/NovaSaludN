@@ -6,21 +6,29 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 
-$id_venta = $_GET['id'];
-$venta = $conn->query("SELECT ventas.id, productos.nombre, ventas.cantidad, ventas.total, ventas.fecha_venta 
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    die("ID de venta inválido.");
+}
+
+$id_venta = (int) $_GET['id']; // cast seguro
+
+// Consulta segura con prepared statement
+$stmt = $conn->prepare("SELECT ventas.id, productos.nombre, ventas.cantidad, ventas.total, ventas.fecha_venta 
                         FROM ventas 
                         JOIN productos ON ventas.id_producto = productos.id
-                        WHERE ventas.id = $id_venta")->fetch_assoc();
+                        WHERE ventas.id = ?");
+$stmt->bind_param("i", $id_venta);
+$stmt->execute();
+$resultado = $stmt->get_result();
+$venta = $resultado->fetch_assoc();
+
+if (!$venta) {
+    die("Venta no encontrada.");
+}
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Detalle Venta - Nova Salud</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+<?php include '../../includes/header.php'; ?>
+
 <div class="container mt-5">
     <h3>Detalle de la Venta</h3>
     <table class="table table-bordered">
@@ -47,5 +55,5 @@ $venta = $conn->query("SELECT ventas.id, productos.nombre, ventas.cantidad, vent
     </table>
     <a href="ventas.php" class="btn btn-secondary">Volver a Ventas</a>
 </div>
-</body>
-</html>
+
+<?php include '../../includes/footer.php'; ?>
